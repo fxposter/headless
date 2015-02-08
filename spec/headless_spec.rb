@@ -19,13 +19,13 @@ describe Headless do
 
     context "when Xvfb is not started yet" do
       it "starts Xvfb" do
-        Headless.any_instance.should_receive(:system).with("/usr/bin/Xvfb :99 -screen 0 1280x1024x24 -ac >/dev/null 2>&1 &").and_return(true)
+        Process.should_receive(:spawn).with("/usr/bin/Xvfb :99 -screen 0 1280x1024x24 -ac", :out => '/dev/null', :err => '/dev/null').and_return(true)
 
         headless = Headless.new
       end
 
       it "allows setting screen dimensions" do
-        Headless.any_instance.should_receive(:system).with("/usr/bin/Xvfb :99 -screen 0 1024x768x16 -ac >/dev/null 2>&1 &").and_return(true)
+        Process.should_receive(:spawn).with("/usr/bin/Xvfb :99 -screen 0 1024x768x16 -ac", :out => '/dev/null', :err => '/dev/null').and_return(true)
 
         headless = Headless.new(:dimensions => "1024x768x16")
       end
@@ -170,6 +170,8 @@ private
     Headless::CliUtil.stub(:path_to).and_return("/usr/bin/Xvfb")
 
     # TODO this is wrong. But, as long as Xvfb is started inside the constructor (which is also wrong), I don't see another option to make tests pass
+    Process.stub(:spawn)
+    Process.stub(:detach)
     Headless.any_instance.stub(:ensure_xvfb_is_running).and_return(true)
   end
 end

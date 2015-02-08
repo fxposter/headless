@@ -143,10 +143,10 @@ private
 
   def launch_xvfb
     #TODO error reporting
-    result = system "#{CliUtil.path_to("Xvfb")} :#{display} -screen 0 #{dimensions} -ac >/dev/null 2>&1 &"
-    raise Headless::Exception.new("Xvfb did not launch - something's wrong") unless result
+    pid = Process.spawn("#{CliUtil.path_to("Xvfb")} :#{display} -screen 0 #{dimensions} -ac", :out => '/dev/null', :err => '/dev/null')
+    Process.detach(pid)
     ensure_xvfb_is_running
-    return true
+    true
   end
 
   def ensure_xvfb_is_running
