@@ -169,9 +169,11 @@ private
     Headless::CliUtil.stub(:read_pid).and_return(nil)
     Headless::CliUtil.stub(:path_to).and_return("/usr/bin/Xvfb")
 
-    # TODO this is wrong. But, as long as Xvfb is started inside the constructor (which is also wrong), I don't see another option to make tests pass
-    Process.stub(:spawn)
+    # PID can't be more 65535
+    Process.stub(:spawn).and_return(100000)
     Process.stub(:detach)
+
+    # TODO this is wrong. But, as long as Xvfb is started inside the constructor (which is also wrong), I don't see another option to make tests pass
     Headless.any_instance.stub(:ensure_xvfb_is_running).and_return(true)
   end
 end

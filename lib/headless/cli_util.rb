@@ -44,21 +44,23 @@ class Headless
 
     def self.kill_process(pid_filename, options={})
       if pid = self.read_pid(pid_filename)
-        begin
-          Process.kill 'TERM', pid
-          Process.wait pid if options[:wait]
-        rescue Errno::ESRCH
-          # no such process; assume it's already killed
-        rescue Errno::ECHILD
-          # Process.wait tried to wait on a dead process
-        end
+        self.kill_pid(pid, options)
       end
-      
+
       begin
         FileUtils.rm pid_filename
       rescue Errno::ENOENT
         # pid file already removed
       end
+    end
+
+    def self.kill_pid(pid, options={})
+      Process.kill 'TERM', pid
+      Process.wait pid if options[:wait]
+    rescue Errno::ESRCH
+      # no such process; assume it's already killed
+    rescue Errno::ECHILD
+      # Process.wait tried to wait on a dead process
     end
   end
 end

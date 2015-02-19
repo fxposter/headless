@@ -56,6 +56,9 @@ class Headless
   # The display dimensions
   attr_reader :dimensions
 
+  # Pid of Xvfb process, we've launched or attached to
+  attr_reader :pid
+
   # Creates a new headless server, but does NOT switch to it immediately. Call #start for that
   #
   # List of available options:
@@ -93,7 +96,7 @@ class Headless
   # Switches back from the headless server and terminates the headless session
   def destroy
     stop
-    CliUtil.kill_process(pid_filename)
+    CliUtil.kill_pid(@pid)
   end
 
   # Block syntax:
@@ -125,15 +128,16 @@ private
 
   def attach_xvfb
     possible_display_set = @autopick_display ? @display..MAX_DISPLAY_NUMBER : Array(@display)
-    pick_available_display(possible_display_set, @reuse_display)
+    @pid = pick_available_display(possible_display_set, @reuse_display)
   end
 
   def pick_available_display(display_set, can_reuse)
+    pid = nil
     display_set.each do |display_number|
       @display = display_number
       begin
-        return true if xvfb_running? && can_reuse
-        return true if !xvfb_running? && launch_xvfb
+        return pid if (pid = xvfb_running?) && can_reuse
+        return pid if !xvfb_running? && (pid = launch_xvfb)
       rescue Errno::EPERM # display not accessible
         next
       end
@@ -146,7 +150,7 @@ private
     pid = Process.spawn("#{CliUtil.path_to("Xvfb")} :#{display} -screen 0 #{dimensions} -ac", :out => '/dev/null', :err => '/dev/null')
     Process.detach(pid)
     ensure_xvfb_is_running
-    true
+    pid
   end
 
   def ensure_xvfb_is_running
@@ -158,7 +162,7 @@ private
   end
 
   def xvfb_running?
-    !!read_xvfb_pid
+    read_xvfb_pid
   end
 
   def pid_filename
